@@ -1,30 +1,52 @@
-#include <avr/wdt.h>
-#include "DeviceDriverSet_xxx0.h"
-#include "ApplicationFunctionSet_xxx0.cpp"
+// C++ code
+//
 
-DeviceDriverSet_Motor AppMotor;
+const int left_motor_a = 4;
+const int left_motor_b = 5;
+const int right_motor_a = 6;
+const int right_motor_b = 7;
+const int enable_a = 10;
+const int enable_b = 11;
 
-Application_xxx Application_SmartRobotCarxxx0;
-
-void setup() {
-  AppMotor.DeviceDriverSet_Motor_Init();
-  delay(2000);
-  Application_SmartRobotCarxxx0.Motion_Control = 0;
-
-  DeviceDriverSet_Motor_CircularTrajectory(200 /*speed*/, 0 /*startAngle*/, 360 /*endAngle*/, -1 /*direction*/);
-
+void setup()
+{
+  pinMode(left_motor_a, OUTPUT); // left motor: CCW
+  pinMode(left_motor_b, OUTPUT); // left motor: CW
+  pinMode(right_motor_a, OUTPUT); // right motor: CCW
+  pinMode(right_motor_b, OUTPUT); // right motor: CW
+  pinMode(enable_a, OUTPUT);
+  pinMode(enable_b, OUTPUT);
+  Serial.begin(9600);
+ 
 }
 
-void loop() {
-
+void forward(int second) {
+  Serial.println("Forward Moving");
+  digitalWrite(right_motor_a, LOW); // This was changed from HIGH to LOW do boat moving backwards. 
+  digitalWrite(right_motor_b, HIGH);
+  digitalWrite(left_motor_a, LOW); // same change as above
+  digitalWrite(left_motor_b, HIGH);
+  analogWrite(enable_a, 200);
+  analogWrite(enable_b, 200);
+  delay(second * 1000);
+  
 }
 
-void DeviceDriverSet_Motor_CircularTrajectory(uint8_t speed, int startAngle, int endAngle, int direction) {
-  for (int i = startAngle; i < endAngle; i++) {
-    float radian = i * PI / 180;
-    int speed_A = speed * cos(radian);
-    int speed_B = speed * sin(radian);
-    AppMotor.DeviceDriverSet_Motor_control(direction, speed_A, direction, speed_B, control_enable);
-    delay(10);
-  }
+void stop() {
+  Serial.println("Stopping Motors");
+  digitalWrite(right_motor_a, LOW);
+  digitalWrite(right_motor_b, LOW);
+  digitalWrite(left_motor_a, LOW);
+  digitalWrite(left_motor_b, LOW);
+  analogWrite(enable_a, 0);
+  analogWrite(enable_b, 0);
+}
+
+const int seconds = 2;
+
+void loop()
+{
+  forward(6);
+  stop();
+  delay(seconds * 1000);
 }
