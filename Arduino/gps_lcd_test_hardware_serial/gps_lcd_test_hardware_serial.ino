@@ -1,4 +1,3 @@
-#include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <TinyGPS++.h>
 
@@ -10,17 +9,17 @@ TinyGPSPlus gps;
 
 void setup() {
   Serial.begin(9600);
-  Serial1.begin(9600); // Use Serial1 for GPS communication
+  Serial2.begin(9600); // Use Serial1 for GPS communication
 
   lcd.init();  // initialize the lcd
   lcd.backlight(); // turn on the backlight
 
-  lcd.print("Waiting for GPS ...");
-}
+  lcd.print("Connecting to GPS");
+}    
 
 void loop() {
-  while (Serial1.available() > 0) {
-    if (gps.encode(Serial1.read())) {
+  while (Serial2.available() > 0) {
+    if (gps.encode(Serial2.read())) {
       if (gps.location.isValid()){
         lcd.clear();
         lcd.setCursor(0,0);

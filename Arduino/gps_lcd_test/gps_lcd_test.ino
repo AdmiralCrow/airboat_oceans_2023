@@ -3,8 +3,8 @@
 #include <SoftwareSerial.h>
 #include <TinyGPS++.h> 
 
-#define RX_PIN 19 // Define the RX and TX pins
-#define TX_PIN 18 // for the software serial.
+#define RX_PIN 12 // Define the RX and TX pins
+#define TX_PIN 13 // for the software serial.
 
 // Initialize the LCD display
 // LiquidCrystal_I2C lcd(address, columns, rows);
