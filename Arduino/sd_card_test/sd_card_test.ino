@@ -1,6 +1,6 @@
 #include <SD.h>
 
-#define SD_CS_PIN 4
+#define SD_CS_PIN 53
 File dataFile;
 
 void setup() {
@@ -12,9 +12,9 @@ void setup() {
     return;
   }
 
-  dataFile = SD.open("data1.txt", FILE_WRITE);
+  dataFile = SD.open("test.txt", FILE_WRITE);
   if (dataFile) {
-    dataFile.println("Hello World22");
+    dataFile.println("Hello World!");
     dataFile.close();
     Serial.println("Hello World written to file.");
   } else {
