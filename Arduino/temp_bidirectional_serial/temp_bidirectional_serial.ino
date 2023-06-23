@@ -20,8 +20,8 @@ const int left_motor_a = 2;
 const int left_motor_b = 3;
 const int right_motor_a = 5;
 const int right_motor_b = 4;
-const int enable_a = A13;
-const int enable_b = A5;
+const int enable_a = A1;
+const int enable_b = A0;
 
 void forward(int second) {
   //Serial.println("Forward Moving");
@@ -71,6 +71,17 @@ void left(int second) {
   
 }
 
+void stay(int second) {
+  //Serial.println("stop Moving");
+  digitalWrite(right_motor_a, LOW);
+  digitalWrite(right_motor_b, LOW);
+  digitalWrite(left_motor_a, LOW);
+  digitalWrite(left_motor_b, LOW);
+  analogWrite(enable_a, 200);
+  analogWrite(enable_b, 200);
+  delay(second * 1000);
+  
+}
 
 
 void setup() {
@@ -86,7 +97,7 @@ void setup() {
   
 }
 
-const int seconds = 2;
+const int seconds = 1;
 
 void loop() {
   sensors.requestTemperatures();
@@ -107,7 +118,10 @@ void loop() {
       }
     else if(command.equals("right")) {
         right(seconds);
-      }    
+      }
+    else if(command.equals("stop")) {
+        stay(seconds);
+      }
     }
   
   delay(1000); // Wait for a second  

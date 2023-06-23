@@ -5,8 +5,8 @@ const int left_motor_a = 2;
 const int left_motor_b = 3;
 const int right_motor_a = 5;
 const int right_motor_b = 4;
-const int enable_a = A13;
-const int enable_b = A5;
+const int enable_a = A1 ;
+const int enable_b = A0;
 
 void setup()
 {
