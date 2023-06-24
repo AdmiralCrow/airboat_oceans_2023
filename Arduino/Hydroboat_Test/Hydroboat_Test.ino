@@ -3,16 +3,32 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <SPI.h>
+#include <HCSR04.h>
 #include <SD.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
-TinyGPSPlus gps;
-SoftwareSerial ss(15, 14); //rx, tx
+#include <RTClib.h>  // Include the RTC library
+#include "DTH_Turbidity.h"
 
+
+#define SD_CS_PIN 53 // Define the chip select pin for the SD card
+#define TEMPERATURE_PIN 6
+#define RX_PIN 12 // Define the RX and TX pins
+#define TX_PIN 13 // for the software serial.
+#define DEPTH_TRIG_PIN 22
+#define DEPTH_ECHO_PIN 23
+#define TURBIDITY_PIN A9
+
+SoftwareSerial ss(RX_PIN, TX_PIN);
 File myFile;
-OneWire oneWire(6);
-DallasTemperature sensors(&oneWire);
+OneWire oneWire(TEMPERATURE_PIN);
+DallasTemperature temp_sensor(&oneWire);
 LiquidCrystal_I2C lcd(0x27,16,2); 
+UltraSonicDistanceSensor depth_sensor(DEPTH_TRIG_PIN, DEPTH_ECHO_PIN);
+RTC_DS3231 rtc;  // Create an instance of the RTC class
+TinyGPSPlus gps;
+DTH_Turbidity turb_sensor(TURBIDITY_PIN);
+
 int getstr = 0;
 float temp_measured;
 int enA = A1;
@@ -23,6 +39,25 @@ int in3 = 4;
 int in4 = 5;
 float volt;
 float ntu;
+
+struct Coordinates {
+  float latitude;
+  float longitude;
+};
+
+Coordinates getCoordinates() {
+  Coordinates coordinates;
+  while (ss.available() > 0) {
+    if (gps.encode(ss.read())) {
+      if (gps.location.isValid()) {
+        delay(500);
+        coordinates.latitude = gps.location.lat();
+        coordinates.longitude = gps.location.lng();
+        return coordinates;
+      }
+    }
+  }
+}
 
 void moveForward() {
   analogWrite(enA, 140);
@@ -77,92 +112,34 @@ float round_to_dp( float in_value, int decimal_place ){
 }
 
 float getTurbidity(){
-  volt = 0;
-    for(int i=0; i<800; i++)
-    {
-        volt += ((float)analogRead(A9)/1023)*5;
-    }
-    volt = volt/800;
-    volt = round_to_dp(volt,2);
-    if(volt < 2.5){
-      ntu = 3000;
-    }else{
-      ntu = -1120.4*square(volt)+5742.3*volt-4353.8; 
-    }
-//    Serial.print(volt);
-//    Serial.println(" V");
-//    Serial.print(ntu);
-//    Serial.print(" NTU");
-    delay(10);
-    return ntu;
-  }
+..return turb_sensor.readTurbidity();
+}
 
 float getTemperature(){
-  sensors.requestTemperatures();
-//  Serial.print(sensors.getTempCByIndex(0));
-//  Serial.print(",");
-//  Serial.println((sensors.getTempCByIndex(0) * 9.0) / 5.0 + 32.0);
-  temp_measured = (sensors.getTempCByIndex(0) * 9.0) / 5.0 + 32.0;
+  temp_sensor.requestTemperatures();
+  temp_measured = (temp_sensor.getTempCByIndex(0) * 9.0) / 5.0 + 32.0;
   return temp_measured;
-  
-  delay(1000);
+}
+
+void appendDataToSD(float latitude, float longitude) {
+  if (dataFile) {
+    dataFile.print("Latitude: ");
+    dataFile.print(latitude, 6);
+    dataFile.print(", Longitude: ");
+    dataFile.print(longitude, 6);
+    dataFile.print(", Temp: ");
+    dataFile.print(readTemperatureSensor(), 6);
+    dataFile.print(", Depth: ");
+    dataFile.print(readDepthSensor(), 6);
+    dataFile.print(", Turb: ");
+    dataFile.println(readTurbiditySensor(), 6);
+
+    dataFile.flush(); // Ensure data is written to the SD card
+    Serial.println("Data appended to SD card.");
+  } else {
+    Serial.println("Error writing data to SD card.");
   }
-
-float getLat(){
-    while (ss.available() > 0){
-      if (gps.encode(ss.read())){
-        if (gps.location.isValid()){
-            delay(500);
-            float latitude = gps.location.lat();
-            return latitude;}}}
 }
-
-float getLong(){
-    while (ss.available() > 0){
-      if (gps.encode(ss.read())){
-        if (gps.location.isValid()){
-            delay(500);
-             float longitude = gps.location.lng();
-             return longitude;}}}
-}
-
-//void cardReader(){
-//  while (!Serial) {
-//    ; // wait for serial port to connect.
-//  }
-//  lcd.clear();
-//  lcd.setCursor(0,0);
-//  lcd.print("Init SD card...");
-//
-//  if (!SD.begin(53)) {
-//    lcd.clear();
-//    lcd.setCursor(0,0);
-//    lcd.print("init failed!");
-//  }
-//  lcd.clear();
-//  lcd.setCursor(0,0);
-//  lcd.print("init done.");
-//
-//  myFile = SD.open("test.txt");
-//  if (myFile) {
-//    lcd.clear();
-//    lcd.setCursor(0,0);
-//    lcd.print("test.txt:");
-//    while (myFile.available()) {
-//      lcd.clear();
-////      Serial.println("This is what is in the file!");
-////      Serial.write(myFile.read());
-//      lcd.setCursor(0,1);
-//      lcd.print(myFile.read());
-//    }
-//
-//    myFile.close();
-//  } else {
-//    lcd.clear();
-//    lcd.setCursor(0,0);
-//    lcd.print("error opening test.txt");
-//  }
-//  }
 
 void setup() {
   Serial.begin(9600);
@@ -179,15 +156,33 @@ void setup() {
   pinMode(in2, OUTPUT);
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
-  sensors.begin();
+  temp_sensors.begin();
   
+  // Get the current date and time from the RTC
+  DateTime now = rtc.now();
+  // Create the filename using the current date and time
+  String filename = String(now.year(), DEC) + "-" +
+		  formatDigits(now.month()) + "-" +
+		  formatDigits(now.day()) + "_" +
+		  formatDigits(now.hour()) + "_" +
+		  formatDigits(now.minute()) + "_" +
+		  formatDigits(now.second()) + ".csv";
+  SD.begin(SD_CS_PIN); // Initialize SD card
+  // Open the data file in write mode
+  dataFile = SD.open(filename, FILE_WRITE);
+  if (dataFile) {
+    Serial.println("SD card initialized.");
+  } else {
+    Serial.println("Error opening data file.");
+  }
 }
 
 void loop() {
   float temp = getTemperature();
   float turbidity = getTurbidity();
-//  float latitude = getLat();
-//  float longitude = getLong();
+  Coordinates coords = getCoordinates;
+  float latitude = coords.latitude;
+  float longitude = coords.longitude;
 
   lcd.clear();
   lcd.setCursor(0,0);

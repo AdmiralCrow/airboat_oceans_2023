@@ -1,11 +1,12 @@
 from datetime import datetime
 import csv
 import os
-from picamera2 import Picamera2, Preview
 import time
 
 from inputs import devices, get_gamepad
 import serial
+
+from picamera2 import Picamera2, Preview
 
 if __name__ == '__main__':
     ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)  # Raspberry Pi
@@ -16,7 +17,7 @@ if __name__ == '__main__':
 
     # Check if the CSV file exists
     file_exists = os.path.isfile(csv_filename)
-    
+
     picam2 = Picamera2()
     camera_config = picam2.create_still_configuration(main={"size": (1920, 1080)}, lores={"size": (640, 480)}, display="lores")
     picam2.configure(camera_config)
@@ -63,4 +64,4 @@ if __name__ == '__main__':
                                 writer.writerow([timestamp, temp])
                     elif command == 'BTN_START':
                                 timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-                                picam2.capture_file(timestamp+'.jpg')
+                                picam2.capture_file(timestamp + '.jpg')
