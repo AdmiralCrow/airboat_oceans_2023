@@ -61,40 +61,40 @@ Coordinates getCoordinates() {
 void moveForward() {
   analogWrite(enA, 140);
   analogWrite(enB, 140);
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);  
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW); 
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);  
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH); 
 //  Serial.println("MForward");
 }
 
 void moveBackward(){
   analogWrite(enA, 140);
   analogWrite(enB, 140);
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);  
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH); 
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);  
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW); 
 //  Serial.println("MBackward");
 }
 
 void moveRight(){
   analogWrite(enA, 140);
   analogWrite(enB, 140);
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);  
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);  
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
 //  Serial.println("MRight");
 }
 
 void moveLeft(){
   analogWrite(enA, 140);
   analogWrite(enB, 140);
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);  
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);  
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
 //  Serial.println("MLeft");
 }
 
@@ -124,17 +124,38 @@ float getTemperature(){
   return temp_measured;
 }
 
+// Helper function to format a number as two digits with leading zeros if necessary
+String formatDigits(int digits) {
+  if (digits < 10) {
+    return "0" + String(digits);
+  } else {
+    return String(digits);
+  }
+}
+
+String getFormattedDateTime() {
+  DateTime now = rtc.now();
+  String formattedDateTime = String(now.year()) + "-" +
+                             formatDigits(now.month()) + "-" +
+                             formatDigits(now.day()) + " " +
+                             formatDigits(now.hour()) + ":" +
+                             formatDigits(now.minute()) + ":" +
+                             formatDigits(now.second());
+  return formattedDateTime;
+}
+
 void appendDataToSD(float latitude, float longitude, float temperature, float depth, float turbidity) {
   if (dataFile) {
-    dataFile.print("Latitude: ");
+    dataFile.print(getFormattedDateTime());
+    dataFile.print(",");
     dataFile.print(latitude, 6);
-    dataFile.print(", Longitude: ");
+    dataFile.print(",");
     dataFile.print(longitude, 6);
-    dataFile.print(", Temp: ");
+    dataFile.print(",");
     dataFile.print(temperature, 6);
-    dataFile.print(", Depth: ");
+    dataFile.print(",");
     dataFile.print(depth, 6);
-    dataFile.print(", Turb: ");
+    dataFile.print(",");
     dataFile.println(turbidity, 6);
 
     dataFile.flush(); // Ensure data is written to the SD card
@@ -147,15 +168,6 @@ void appendDataToSD(float latitude, float longitude, float temperature, float de
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Error writing data to SD card.");
-  }
-}
-
-// Helper function to format a number as two digits with leading zeros if necessary
-String formatDigits(int digits) {
-  if (digits < 10) {
-    return "0" + String(digits);
-  } else {
-    return String(digits);
   }
 }
 
@@ -194,7 +206,7 @@ void setup() {
     
     // Write the headers as the first row
     if (dataFile) {
-      dataFile.println("Latitude,Longitude,Temperature (C),Depth (cm),Turbidity (NTU)");
+      dataFile.println("Date Time, Latitude,Longitude,Temperature (C),Depth (cm),Turbidity (NTU)");
       dataFile.close();
       //Serial.println("File created with headers.");
       lcd.clear();
@@ -251,22 +263,16 @@ void loop() {
 	getstr=Serial.read();
 
 	if(getstr=='f'){
-	moveForward();
-	delay(100);}
+	moveForward();}
 	else if(getstr=='b'){
-	moveBackward();
-	delay(100);}
+	moveBackward();}
 	else if(getstr=='l'){
-	moveLeft();
-	delay(100);}
+	moveLeft();}
 	else if(getstr=='r'){
-	moveRight();
-	delay(100);}
+	moveRight();}
 	else if(getstr=='s'){
-	stopMotion();
-	delay(100);}
+	stopMotion();}
 	else if (getstr == '2') {
-	delay(100);
 	Serial.print(temp);
 	Serial.print(",");
 	Serial.print(turbidity);
@@ -281,7 +287,7 @@ void loop() {
 	//Serial.print("too far");
 	//Serial.print(",");
 
-	appendDataToSD(latitude, longitude, temp, depth, turbidity);
-	delay(100);}
-    
+	appendDataToSD(latitude, longitude, temp, depth, turbidity);}
+ 
+  delay(100);
 }
