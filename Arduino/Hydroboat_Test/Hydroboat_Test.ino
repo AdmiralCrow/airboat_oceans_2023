@@ -49,7 +49,7 @@ Coordinates getCoordinates() {
   while (gps_ss.available() > 0) {
     if (gps.encode(gps_ss.read())) {
       if (gps.location.isValid()) {
-        delay(500);
+        //delay(500);
         coordinates.latitude = gps.location.lat();
         coordinates.longitude = gps.location.lng();
         return coordinates;
@@ -138,9 +138,15 @@ void appendDataToSD(float latitude, float longitude, float temperature, float de
     dataFile.println(turbidity, 6);
 
     dataFile.flush(); // Ensure data is written to the SD card
-    Serial.println("Data appended to SD card.");
+    //Serial.println("Data appended to SD card.");
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Data appended to SD card.");
   } else {
-    Serial.println("Error writing data to SD card.");
+    //Serial.println("Error writing data to SD card.");
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Error writing data to SD card.");
   }
 }
 
@@ -158,7 +164,7 @@ void setup() {
   lcd.init();  // initialize the lcd 
   lcd.backlight(); // turn on the backlight
 
-  lcd.print("Waiting for GPS ...");
+  lcd.print("Starting hover boat...");
   delay(1000);
   pinMode(enA, OUTPUT);
   pinMode(enB, OUTPUT);
@@ -167,7 +173,9 @@ void setup() {
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
   temp_sensor.begin();
-  
+
+  //String filename = "data.csv";
+  rtc.begin();
   // Get the current date and time from the RTC
   DateTime now = rtc.now();
   // Create the filename using the current date and time
@@ -179,11 +187,41 @@ void setup() {
 		  formatDigits(now.second()) + ".csv";
   SD.begin(SD_CS_PIN); // Initialize SD card
   // Open the data file in write mode
-  dataFile = SD.open(filename, FILE_WRITE);
-  if (dataFile) {
-    Serial.println("SD card initialized.");
+  // Check if the file already exists
+  if (!SD.exists(filename)) {
+    SD.begin(SD_CS_PIN);
+    dataFile = SD.open(filename, FILE_WRITE);
+    
+    // Write the headers as the first row
+    if (dataFile) {
+      dataFile.println("Latitude,Longitude,Temperature (C),Depth (cm),Turbidity (NTU)");
+      dataFile.close();
+      //Serial.println("File created with headers.");
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("File created with headers.");
+    } else {
+      //Serial.println("Error creating file.");
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Error creating file.");
+    }
   } else {
-    Serial.println("Error opening data file.");
+    // File already exists
+    SD.begin(SD_CS_PIN);
+    dataFile = SD.open(filename, FILE_WRITE);
+    
+    if (dataFile) {
+      //Serial.println("File opened.");
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("File opened.");
+    } else {
+      //Serial.println("Error opening file.");
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Error opening file.");
+    }
   }
 }
 
@@ -196,20 +234,19 @@ void loop() {
 	float depth = getDepth();
 
 	lcd.clear();
-	lcd.setCursor(0,0);
-	lcd.print("Temp: ");
-	lcd.print(temp);
-	lcd.setCursor(0,1);
-	lcd.print("Turb: ");
-	lcd.print(turbidity);
-	//delay(500);
-	//lcd.clear();
 	//lcd.setCursor(0,0);
-	//lcd.print("Lat:");
-	//lcd.print(latitude);
+	//lcd.print("Temp: ");
+	//lcd.print(temp);
 	//lcd.setCursor(0,1);
-	//lcd.print("Lon:");
-	//lcd.print(longitude);
+	//lcd.print("Turb: ");
+	//lcd.print(turbidity);
+	//lcd.clear();
+	lcd.setCursor(0,0);
+	lcd.print("Lat:");
+	lcd.print(latitude);
+	lcd.setCursor(0,1);
+	lcd.print("Lon:");
+	lcd.print(longitude);
 
 	getstr=Serial.read();
 
