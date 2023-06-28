@@ -19,13 +19,13 @@
 #define TURBIDITY_PIN A9
 
 SoftwareSerial gps_ss(GPS_RX_PIN, GPS_TX_PIN);
+TinyGPSPlus gps;
 File dataFile;
 OneWire oneWire(TEMPERATURE_PIN);
 DallasTemperature temp_sensor(&oneWire);
 LiquidCrystal_I2C lcd(0x27,16,2); 
 UltraSonicDistanceSensor depth_sensor(DEPTH_TRIG_PIN, DEPTH_ECHO_PIN);
 RTC_DS3231 rtc;  // Create an instance of the RTC class
-TinyGPSPlus gps;
 DTH_Turbidity turb_sensor(TURBIDITY_PIN);
 
 int getstr = 0;
@@ -49,7 +49,6 @@ Coordinates getCoordinates() {
   while (gps_ss.available() > 0) {
     if (gps.encode(gps_ss.read())) {
       if (gps.location.isValid()) {
-        //delay(500);
         coordinates.latitude = gps.location.lat();
         coordinates.longitude = gps.location.lng();
         return coordinates;
@@ -148,15 +147,15 @@ void appendDataToSD(float latitude, float longitude, float temperature, float de
   if (dataFile) {
     dataFile.print(getFormattedDateTime());
     dataFile.print(",");
-    dataFile.print(latitude, 6);
+    dataFile.print(latitude, 10);
     dataFile.print(",");
-    dataFile.print(longitude, 6);
+    dataFile.print(longitude, 10);
     dataFile.print(",");
-    dataFile.print(temperature, 6);
+    dataFile.print(temperature, 10);
     dataFile.print(",");
-    dataFile.print(depth, 6);
+    dataFile.print(depth, 10);
     dataFile.print(",");
-    dataFile.println(turbidity, 6);
+    dataFile.println(turbidity, 10);
 
     dataFile.flush(); // Ensure data is written to the SD card
     //Serial.println("Data appended to SD card.");
@@ -173,10 +172,12 @@ void appendDataToSD(float latitude, float longitude, float temperature, float de
 
 void setup() {
   Serial.begin(9600);
+  gps_ss.begin(9600);
+  
   lcd.init();  // initialize the lcd 
   lcd.backlight(); // turn on the backlight
 
-  lcd.print("Starting hover boat...");
+  lcd.print("Starting air boat");
   delay(1000);
   pinMode(enA, OUTPUT);
   pinMode(enB, OUTPUT);
@@ -191,12 +192,9 @@ void setup() {
   // Get the current date and time from the RTC
   DateTime now = rtc.now();
   // Create the filename using the current date and time
-  String filename = String(now.year(), DEC) + "-" +
-		  formatDigits(now.month()) + "-" +
-		  formatDigits(now.day()) + "_" +
-		  formatDigits(now.hour()) + "_" +
-		  formatDigits(now.minute()) + "_" +
-		  formatDigits(now.second()) + ".csv";
+  String filename = String(now.year(), DEC) +
+		  formatDigits(now.month()) +
+		  formatDigits(now.day()) + ".csv";
   SD.begin(SD_CS_PIN); // Initialize SD card
   // Open the data file in write mode
   // Check if the file already exists
@@ -216,7 +214,8 @@ void setup() {
       //Serial.println("Error creating file.");
       lcd.clear();
       lcd.setCursor(0,0);
-      lcd.print("Error creating file.");
+      //lcd.print("Error creating file.");
+      lcd.print(filename);
     }
   } else {
     // File already exists
@@ -238,56 +237,62 @@ void setup() {
 }
 
 void loop() {
-	float temp = getTemperature();
-	float turbidity = getTurbidity();
-	Coordinates coords = getCoordinates();
-	float latitude = coords.latitude;
-	float longitude = coords.longitude;
-	float depth = getDepth();
+  while (gps_ss.available() > 0) {
+    if (gps.encode(gps_ss.read())) {
+      if (gps.location.isValid()) {
+        float latitude = gps.location.lat();
+        float longitude = gps.location.lng();
+        float temp = getTemperature();
+        float turbidity = getTurbidity();
+        float depth = getDepth();
+        
+        lcd.clear();
+        //lcd.setCursor(0,0);
+        //lcd.print("Temp: ");
+        //lcd.print(temp);
+        //lcd.setCursor(0,1);
+        //lcd.print("Turb: ");
+        //lcd.print(turbidity);
+        //lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print("Lat:");
+        lcd.print(latitude, 9);
+        lcd.setCursor(0,1);
+        lcd.print("Lon:");
+        lcd.print(longitude, 8);
+        
+        getstr=Serial.read();
+        
+        if(getstr=='f'){
+        moveForward();}
+        else if(getstr=='b'){
+        moveBackward();}
+        else if(getstr=='l'){
+        moveLeft();}
+        else if(getstr=='r'){
+        moveRight();}
+        else if(getstr=='s'){
+        stopMotion();}
+        else if (getstr == '2') {
+        Serial.print(temp);
+        Serial.print(",");
+        Serial.print(turbidity);
+        Serial.print(",");
+        //Serial.print("deep");
+        Serial.print(depth, 6);
+        Serial.print(",");
+        Serial.print(latitude, 6);
+        //Serial.print("far");
+        Serial.print(",");
+        Serial.print(longitude, 6);
+        //Serial.print("too far");
+        //Serial.print(",");
+        
+        appendDataToSD(latitude, longitude, temp, depth, turbidity);}
+      }
+    }
+  }
 
-	lcd.clear();
-	//lcd.setCursor(0,0);
-	//lcd.print("Temp: ");
-	//lcd.print(temp);
-	//lcd.setCursor(0,1);
-	//lcd.print("Turb: ");
-	//lcd.print(turbidity);
-	//lcd.clear();
-	lcd.setCursor(0,0);
-	lcd.print("Lat:");
-	lcd.print(latitude);
-	lcd.setCursor(0,1);
-	lcd.print("Lon:");
-	lcd.print(longitude);
-
-	getstr=Serial.read();
-
-	if(getstr=='f'){
-	moveForward();}
-	else if(getstr=='b'){
-	moveBackward();}
-	else if(getstr=='l'){
-	moveLeft();}
-	else if(getstr=='r'){
-	moveRight();}
-	else if(getstr=='s'){
-	stopMotion();}
-	else if (getstr == '2') {
-	Serial.print(temp);
-	Serial.print(",");
-	Serial.print(turbidity);
-	Serial.print(",");
-	//Serial.print("deep");
-	Serial.print(depth, 6);
-	Serial.print(",");
-	Serial.print(latitude, 6);
-	//Serial.print("far");
-	Serial.print(",");
-	Serial.print(longitude, 6);
-	//Serial.print("too far");
-	//Serial.print(",");
-
-	appendDataToSD(latitude, longitude, temp, depth, turbidity);}
  
   delay(100);
 }
