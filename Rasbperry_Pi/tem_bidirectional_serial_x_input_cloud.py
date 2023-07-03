@@ -1,23 +1,23 @@
 from datetime import datetime
 import os
 import time
-import serial
-from pymongo import MongoClient
 
 from inputs import devices, get_gamepad
+from pymongo import MongoClient
+import serial
+
 from picamera2 import Picamera2
 
 if __name__ == '__main__':
-    uri = "mongodb+srv://marinerobotics:<password>@cluster0.7tv1lgs.mongodb.net/?retryWrites=true&w=majority"
-    
+    uri = "mongodb+srv://marinerobotics:17B9EoUMJnCZNDvz@cluster0.7tv1lgs.mongodb.net/?retryWrites=true&w=majority"
+
     # Create a new client and connect to the server
     client = MongoClient(uri)
-    
+
     # Access the desired database and collection
-    print(client.test)# specify the database and collection
-    db = client.db
-    collection = db.my_collection
-    
+    db = client['in-situ_data']
+    collection = db['gps_temperature']
+
     # Send a ping to confirm a successful connection
     try:
         client.admin.command('ping')
@@ -59,12 +59,14 @@ if __name__ == '__main__':
                         if ser.in_waiting > 0:
                             line = ser.readline().decode('utf-8').rstrip()
                             print(line)
-                            temp = float(line)
+                            temp, lat, lon = map(float, line.split(','))
 
                             # Write the sensor data to the MongoDB collection
                             data = {
                                 'datetime': datetime.now(),
-                                'temperature': temp
+                                'temperature': temp,
+                                'latitude': lat,
+                                'longitude': lon
                             }
                             collection.insert_one(data)
                     elif command == 'BTN_START':
