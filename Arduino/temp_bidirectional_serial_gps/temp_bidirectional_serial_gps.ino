@@ -125,7 +125,8 @@ void loop() {
         lcd.print("Lon: ");
         lcd.print(longitude, 8);
         
-        Serial.println(String(temperature) + "," + String(latitude) + "," + String(longitude));
+        Serial.println(String(temperature, 4) + "," + String(latitude, 10) + "," + String(longitude, 10));
+
 
         if (Serial.available()) {
           command = Serial.readStringUntil('\n');
