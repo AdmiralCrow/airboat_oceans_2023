@@ -1,21 +1,22 @@
 from datetime import datetime
-import csv
 import os
 import time
+import serial
+from pymongo import MongoClient
 
 from inputs import devices, get_gamepad
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
-import serial
-
-from picamera2 import Picamera2, Preview
+from picamera2 import Picamera2
 
 if __name__ == '__main__':
-
     uri = "mongodb+srv://marinerobotics:<password>@cluster0.7tv1lgs.mongodb.net/?retryWrites=true&w=majority"
     
     # Create a new client and connect to the server
-    client = MongoClient(uri, server_api=ServerApi('1'))
+    client = MongoClient(uri)
+    
+    # Access the desired database and collection
+    print(client.test)# specify the database and collection
+    db = client.db
+    collection = db.my_collection
     
     # Send a ping to confirm a successful connection
     try:
@@ -27,11 +28,6 @@ if __name__ == '__main__':
     ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)  # Raspberry Pi
     # ser = serial.Serial('/dev/tty.usbmodem14601', 9600, timeout=1)  # Linux/macOS
     ser.flush()
-
-    csv_filename = 'temperature_data.csv'  # Name of the CSV file
-
-    # Check if the CSV file exists
-    file_exists = os.path.isfile(csv_filename)
 
     picam2 = Picamera2()
     camera_config = picam2.create_still_configuration(main={"size": (1920, 1080)}, lores={"size": (640, 480)}, display="lores")
@@ -59,24 +55,18 @@ if __name__ == '__main__':
                     elif command == 'BTN_TL':
                         ser.write(b'stop\n')
                     elif command == 'BTN_TR':
-                         # Read sensor data
+                        # Read sensor data
                         if ser.in_waiting > 0:
                             line = ser.readline().decode('utf-8').rstrip()
                             print(line)
                             temp = float(line)
 
-                            # Save temp to the CSV file
-                            with open(csv_filename, 'a', newline='') as csvfile:
-                                writer = csv.writer(csvfile)
-
-                                # Add headers if the file was created for the first time
-                                if not file_exists:
-                                    writer.writerow(['Datetime', 'Temperature (C)'])
-                                    file_exists = True
-
-                                # Write the current timestamp and temperature
-                                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                writer.writerow([timestamp, temp])
+                            # Write the sensor data to the MongoDB collection
+                            data = {
+                                'datetime': datetime.now(),
+                                'temperature': temp
+                            }
+                            collection.insert_one(data)
                     elif command == 'BTN_START':
-                                timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-                                picam2.capture_file(timestamp + '.jpg')
+                        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+                        picam2.capture_file(timestamp + '.jpg')
