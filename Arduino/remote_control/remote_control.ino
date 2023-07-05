@@ -7,16 +7,17 @@
 #include <SD.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
-#include <RTClib.h>  // Include the RTC library
+#include <RTClib.h> 
 #include "DTH_Turbidity.h"
 
-#define SD_CS_PIN 53 // Define the chip select pin for the SD card
+#define SD_CS_PIN 53
 #define TEMPERATURE_PIN 6
-#define GPS_RX_PIN 12 // Define the RX and TX pins
-#define GPS_TX_PIN 13 // for the software serial.
+#define GPS_RX_PIN 12
+#define GPS_TX_PIN 13
 #define DEPTH_TRIG_PIN 22
 #define DEPTH_ECHO_PIN 23
 #define TURBIDITY_PIN A9
+#define EPSILON 0.01
 
 SoftwareSerial gps_ss(GPS_RX_PIN, GPS_TX_PIN);
 TinyGPSPlus gps;
@@ -25,7 +26,7 @@ OneWire oneWire(TEMPERATURE_PIN);
 DallasTemperature temp_sensor(&oneWire);
 LiquidCrystal_I2C lcd(0x27,16,2); 
 UltraSonicDistanceSensor depth_sensor(DEPTH_TRIG_PIN, DEPTH_ECHO_PIN);
-RTC_DS3231 rtc;  // Create an instance of the RTC class
+RTC_DS3231 rtc;
 DTH_Turbidity turb_sensor(TURBIDITY_PIN);
 
 int getstr = 0;
@@ -44,6 +45,13 @@ struct Coordinates {
   float longitude;
 };
 
+double randomGaussian() {
+  double u = (double)random() / (double)RAND_MAX;
+  double v = (double)random() / (double)RAND_MAX;
+  double x = sqrt(-2.0 * log(u)) * cos(2.0 * PI * v);
+  return x;
+}
+
 Coordinates getCoordinates() {
   Coordinates coordinates;
   while (gps_ss.available() > 0) {
@@ -57,6 +65,15 @@ Coordinates getCoordinates() {
   }
 }
 
+Coordinates addNoiseToCoordinates(Coordinates original) {
+  Coordinates noisy;
+  
+  noisy.latitude = original.latitude + randomGaussian() * EPSILON;
+  noisy.longitude = original.longitude + randomGaussian() * EPSILON;
+  
+  return noisy;
+}
+
 void moveForward() {
   analogWrite(enA, 140);
   analogWrite(enB, 140);
@@ -64,7 +81,6 @@ void moveForward() {
   digitalWrite(in2, LOW);  
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH); 
-//  Serial.println("MForward");
 }
 
 void moveBackward(){
@@ -74,7 +90,6 @@ void moveBackward(){
   digitalWrite(in2, HIGH);  
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW); 
-//  Serial.println("MBackward");
 }
 
 void moveRight(){
@@ -84,7 +99,6 @@ void moveRight(){
   digitalWrite(in2, LOW);  
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
-//  Serial.println("MRight");
 }
 
 void moveLeft(){
@@ -143,13 +157,17 @@ String getFormattedDateTime() {
   return formattedDateTime;
 }
 
-void appendDataToSD(float latitude, float longitude, float temperature, float depth, float turbidity) {
+void appendDataToSD(float latitude, float longitude, float noisyLatitude, float noisyLongitude, float temperature, float depth, float turbidity) {
   if (dataFile) {
     dataFile.print(getFormattedDateTime());
     dataFile.print(",");
     dataFile.print(latitude, 10);
     dataFile.print(",");
     dataFile.print(longitude, 10);
+    dataFile.print(",");
+    dataFile.print(noisyLatitude, 10);
+    dataFile.print(",");
+    dataFile.print(noisyLongitude, 10);
     dataFile.print(",");
     dataFile.print(temperature, 10);
     dataFile.print(",");
@@ -158,12 +176,10 @@ void appendDataToSD(float latitude, float longitude, float temperature, float de
     dataFile.println(turbidity, 10);
 
     dataFile.flush(); // Ensure data is written to the SD card
-    //Serial.println("Data appended to SD card.");
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Data appended to SD card.");
   } else {
-    //Serial.println("Error writing data to SD card.");
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Error writing data to SD card.");
@@ -171,6 +187,9 @@ void appendDataToSD(float latitude, float longitude, float temperature, float de
 }
 
 void setup() {
+  // Initialize the random number generator with a somewhat random seed
+  randomSeed(analogRead(0));
+  
   Serial.begin(9600);
   gps_ss.begin(9600);
   
@@ -204,7 +223,7 @@ void setup() {
     
     // Write the headers as the first row
     if (dataFile) {
-      dataFile.println("Date Time, Latitude,Longitude,Temperature (C),Depth (cm),Turbidity (NTU)");
+      dataFile.println("Date Time, Latitude,Longitude,Noisy Latitude, Noisy Longitude,Temperature (C),Depth (cm),Turbidity (NTU)");
       dataFile.close();
       //Serial.println("File created with headers.");
       lcd.clear();
@@ -240,8 +259,16 @@ void loop() {
   while (gps_ss.available() > 0) {
     if (gps.encode(gps_ss.read())) {
       if (gps.location.isValid()) {
-        float latitude = gps.location.lat();
-        float longitude = gps.location.lng();
+
+        Coordinates original = getCoordinates();
+        Coordinates noisy = addNoiseToCoordinates(original);
+
+        float latitude = original.latitude;
+        float longitude = original.longitude;
+
+        float noisyLatitude =  noisy.latitude;
+        float noisyLongitude = noisy.longitude;
+        
         float temp = getTemperature();
         float turbidity = getTurbidity();
         float depth = getDepth();
@@ -278,17 +305,13 @@ void loop() {
         Serial.print(",");
         Serial.print(turbidity);
         Serial.print(",");
-        //Serial.print("deep");
         Serial.print(depth, 6);
         Serial.print(",");
         Serial.print(latitude, 6);
-        //Serial.print("far");
         Serial.print(",");
         Serial.print(longitude, 6);
-        //Serial.print("too far");
-        //Serial.print(",");
         
-        appendDataToSD(latitude, longitude, temp, depth, turbidity);}
+        appendDataToSD(latitude, longitude, noisyLatitude, noisyLongitude, temp, depth, turbidity);}
       }
     }
   }
