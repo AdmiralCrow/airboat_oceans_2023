@@ -1,3 +1,5 @@
+#include <LinkedList.h>
+#include <Gaussian.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <OneWire.h>
@@ -45,13 +47,6 @@ struct Coordinates {
   float longitude;
 };
 
-double randomGaussian() {
-  double u = (double)random() / (double)RAND_MAX;
-  double v = (double)random() / (double)RAND_MAX;
-  double x = sqrt(-2.0 * log(u)) * cos(2.0 * PI * v);
-  return x;
-}
-
 Coordinates getCoordinates() {
   Coordinates coordinates;
   while (gps_ss.available() > 0) {
@@ -65,14 +60,17 @@ Coordinates getCoordinates() {
   }
 }
 
+Gaussian gaussian(0.0, 1.0);
+
 Coordinates addNoiseToCoordinates(Coordinates original) {
   Coordinates noisy;
   
-  noisy.latitude = original.latitude + randomGaussian() * EPSILON;
-  noisy.longitude = original.longitude + randomGaussian() * EPSILON;
+  noisy.latitude = original.latitude + gaussian.random() * EPSILON;
+  noisy.longitude = original.longitude + gaussian.random() * EPSILON;
   
   return noisy;
 }
+
 
 void moveForward() {
   analogWrite(enA, 140);
@@ -188,7 +186,8 @@ void appendDataToSD(float latitude, float longitude, float noisyLatitude, float 
 
 void setup() {
   // Initialize the random number generator with a somewhat random seed
-  randomSeed(analogRead(0));
+  //randomSeed(analogRead(4));
+  //randomSeed(micros());
   
   Serial.begin(9600);
   gps_ss.begin(9600);
