@@ -1,3 +1,5 @@
+#include <LinkedList.h>
+#include <Gaussian.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <OneWire.h>
@@ -29,7 +31,6 @@ UltraSonicDistanceSensor depth_sensor(DEPTH_TRIG_PIN, DEPTH_ECHO_PIN);
 RTC_DS3231 rtc;
 DTH_Turbidity turb_sensor(TURBIDITY_PIN);
 
-String trajectoryID;
 int getstr = 0;
 float temp_measured;
 int enA = A1;
@@ -58,6 +59,18 @@ Coordinates getCoordinates() {
     }
   }
 }
+
+Gaussian gaussian(0.0, 1.0);
+
+Coordinates addNoiseToCoordinates(Coordinates original) {
+  Coordinates noisy;
+  
+  noisy.latitude = original.latitude + gaussian.random() * EPSILON;
+  noisy.longitude = original.longitude + gaussian.random() * EPSILON;
+  
+  return noisy;
+}
+
 
 void moveForward() {
   analogWrite(enA, 140);
@@ -142,15 +155,17 @@ String getFormattedDateTime() {
   return formattedDateTime;
 }
 
-void appendDataToSD(float latitude, float longitude, float temperature, float depth, float turbidity) {
+void appendDataToSD(float latitude, float longitude, float noisyLatitude, float noisyLongitude, float temperature, float depth, float turbidity) {
   if (dataFile) {
-    dataFile.print(trajectoryID);
-    dataFile.print(",");
     dataFile.print(getFormattedDateTime());
     dataFile.print(",");
     dataFile.print(latitude, 10);
     dataFile.print(",");
     dataFile.print(longitude, 10);
+    dataFile.print(",");
+    dataFile.print(noisyLatitude, 10);
+    dataFile.print(",");
+    dataFile.print(noisyLongitude, 10);
     dataFile.print(",");
     dataFile.print(temperature, 10);
     dataFile.print(",");
@@ -198,10 +213,6 @@ void setup() {
   String filename = String(now.year(), DEC) +
 		  formatDigits(now.month()) +
 		  formatDigits(now.day()) + ".csv";
-
-  // Create the trajectory ID using the current hours, minutes and seconds
-  trajectoryID = formatDigits(now.hour()) + formatDigits(now.minute()) + formatDigits(now.second());
-  
   SD.begin(SD_CS_PIN); // Initialize SD card
   // Open the data file in write mode
   // Check if the file already exists
@@ -211,7 +222,7 @@ void setup() {
     
     // Write the headers as the first row
     if (dataFile) {
-      dataFile.println("Trajectory ID, Date Time, Latitude,Longitude,Temperature (C),Depth (cm),Turbidity (NTU)");
+      dataFile.println("Date Time, Latitude,Longitude,Noisy Latitude, Noisy Longitude,Temperature (C),Depth (cm),Turbidity (NTU)");
       dataFile.close();
       //Serial.println("File created with headers.");
       lcd.clear();
@@ -249,9 +260,13 @@ void loop() {
       if (gps.location.isValid()) {
 
         Coordinates original = getCoordinates();
+        Coordinates noisy = addNoiseToCoordinates(original);
 
         float latitude = original.latitude;
         float longitude = original.longitude;
+
+        float noisyLatitude =  noisy.latitude;
+        float noisyLongitude = noisy.longitude;
         
         float temp = getTemperature();
         float turbidity = getTurbidity();
@@ -295,7 +310,7 @@ void loop() {
         Serial.print(",");
         Serial.print(longitude, 6);
         
-        appendDataToSD(latitude, longitude, temp, depth, turbidity);}
+        appendDataToSD(latitude, longitude, noisyLatitude, noisyLongitude, temp, depth, turbidity);}
       }
     }
   }
