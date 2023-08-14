@@ -32,10 +32,10 @@ Python pip packages: inputs, pymongo, picamera2 (for 64-bit distros), picamera (
     - To read data from arduino running 'temp_bidirectional_serial_gps', run 'temp_bidirectional_serial_x_input.py' with an x-input USB controller.
 
 ## TinkerCAD Files
-https://www.tinkercad.com/things/2HkaIUoovXk-hb-board
-https://www.tinkercad.com/things/8cseTstDqRV-hb
-https://www.tinkercad.com/things/ijvlaEuduuK-hb-cover
-https://www.tinkercad.com/things/3tqFxbGQxOx-swanky-fulffy
+- https://www.tinkercad.com/things/2HkaIUoovXk-hb-board
+- https://www.tinkercad.com/things/8cseTstDqRV-hb
+- https://www.tinkercad.com/things/ijvlaEuduuK-hb-cover
+- https://www.tinkercad.com/things/3tqFxbGQxOx-swanky-fulffy
 
 ## Usage
 
