@@ -30,6 +30,13 @@ Python pip packages: inputs, pymongo, picamera2 (for 64-bit distros), picamera (
 
 4. Run the Raspberry Pi scripts to control the airboats and collect in-situ data.
     - To read data from arduino running 'temp_bidirectional_serial_gps', run 'temp_bidirectional_serial_x_input.py' with an x-input USB controller.
+
+## TinkerCAD Files
+https://www.tinkercad.com/things/2HkaIUoovXk-hb-board
+https://www.tinkercad.com/things/8cseTstDqRV-hb
+https://www.tinkercad.com/things/ijvlaEuduuK-hb-cover
+https://www.tinkercad.com/things/3tqFxbGQxOx-swanky-fulffy
+
 ## Usage
 
 - The Arduino code handles the motor control and sensor readings on the airboat.
