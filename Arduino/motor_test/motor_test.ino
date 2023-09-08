@@ -26,8 +26,8 @@ void forward(int second) {
   digitalWrite(right_motor_b, LOW);
   digitalWrite(left_motor_a, HIGH);
   digitalWrite(left_motor_b, LOW);
-  analogWrite(enable_a, 200);
-  analogWrite(enable_b, 200);
+  analogWrite(enable_a, 255);
+  analogWrite(enable_b, 255);
   delay(second * 1000);
   
 }
@@ -38,8 +38,8 @@ void backward(int second) {
   digitalWrite(right_motor_b, HIGH);
   digitalWrite(left_motor_a, LOW);
   digitalWrite(left_motor_b, HIGH);
-  analogWrite(enable_a, 200);
-  analogWrite(enable_b, 200);
+  analogWrite(enable_a, 255);
+  analogWrite(enable_b, 255);
   delay(second * 1000);
   
 }
@@ -50,8 +50,8 @@ void right(int second) {
   digitalWrite(right_motor_b, LOW);
   digitalWrite(left_motor_a, LOW);
   digitalWrite(left_motor_b, LOW);
-  analogWrite(enable_a, 200);
-  analogWrite(enable_b, 200);
+  analogWrite(enable_a, 255);
+  analogWrite(enable_b, 255);
   delay(second * 1000);
   
 }
@@ -62,8 +62,8 @@ void left(int second) {
   digitalWrite(right_motor_b, LOW);
   digitalWrite(left_motor_a, HIGH);
   digitalWrite(left_motor_b, LOW);
-  analogWrite(enable_a, 200);
-  analogWrite(enable_b, 200);
+  analogWrite(enable_a, 255);
+  analogWrite(enable_b, 255);
   delay(second * 1000);
   
 }
@@ -82,7 +82,7 @@ const int seconds = 2;
 
 void loop()
 {
-  forward(2);
+  forward(10);
   stop();
   backward(2);
   stop();
