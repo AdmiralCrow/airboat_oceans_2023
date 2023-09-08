@@ -60,8 +60,8 @@ Coordinates getCoordinates() {
 }
 
 void moveForward() {
-  analogWrite(enA, 140);
-  analogWrite(enB, 140);
+  analogWrite(enA, 255);
+  analogWrite(enB, 255);
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);  
   digitalWrite(in3, LOW);
@@ -69,8 +69,8 @@ void moveForward() {
 }
 
 void moveBackward(){
-  analogWrite(enA, 140);
-  analogWrite(enB, 140);
+  analogWrite(enA, 255);
+  analogWrite(enB, 255);
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);  
   digitalWrite(in3, HIGH);
@@ -78,8 +78,8 @@ void moveBackward(){
 }
 
 void moveRight(){
-  analogWrite(enA, 140);
-  analogWrite(enB, 140);
+  analogWrite(enA, 255);
+  analogWrite(enB, 255);
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);  
   digitalWrite(in3, HIGH);
@@ -87,8 +87,8 @@ void moveRight(){
 }
 
 void moveLeft(){
-  analogWrite(enA, 140);
-  analogWrite(enB, 140);
+  analogWrite(enA, 255);
+  analogWrite(enB, 255);
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);  
   digitalWrite(in3, LOW);
