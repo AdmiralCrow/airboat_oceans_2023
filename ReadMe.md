@@ -37,7 +37,7 @@ Python pip packages: inputs, pymongo, picamera2 (for 64-bit distros), picamera (
 - https://www.tinkercad.com/things/ijvlaEuduuK-hb-cover
 - https://www.tinkercad.com/things/3tqFxbGQxOx-swanky-fulffy
 
-## Video footage of airboat development and experiments
+## Media
 - https://www.youtube.com/playlist?list=PL6zmRn1bxp9cuD1O0N_DVQbp9Uv_eU2nO
 
 ## Usage
@@ -47,13 +47,6 @@ Python pip packages: inputs, pymongo, picamera2 (for 64-bit distros), picamera (
 - The Raspberry Pi scripts communicate with the Arduino board and gather sensor data.
 
 - The collected data can be stored locally using 'temp_bidirectional_serial_x_input.py' or transmitted to a remote database using 'temp_bidirectional_serial_x_input_cloud.py'.
-
-## Contributors
-
-- Anthony Devesa(https://github.com/AdmiralCrow)
-- Cesar A. Rojas(https://github.com/cesarandresrojas)
-- Gregory M. Reis(https://github.com/paulodocervo)
-- Paulo Padrao(https://github.com/pvpadrao)
 
 ## License
 
