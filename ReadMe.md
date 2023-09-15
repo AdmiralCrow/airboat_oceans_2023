@@ -51,8 +51,8 @@ Python pip packages: inputs, pymongo, picamera2 (for 64-bit distros), picamera (
 ## Contributors
 
 - Anthony Devesa(https://github.com/AdmiralCrow)
-- Cesar Rojas(https://github.com/croja022)
-- Gregory Reis(https://github.com/paulodocervo)
+- Cesar A. Rojas(https://github.com/cesarandresrojas)
+- Gregory M. Reis(https://github.com/paulodocervo)
 - Paulo Padrao(https://github.com/pvpadrao)
 
 ## License
