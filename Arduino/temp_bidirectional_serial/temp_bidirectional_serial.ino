@@ -102,9 +102,9 @@ const int seconds = 1;
 void loop() {
   sensors.requestTemperatures();
   float temperature = sensors.getTempCByIndex(0);
-  Serial.println(temperature);
-  if (Serial.available()) {
-    command = Serial.readStringUntil('\n');
+  Serial2.println(temperature);
+  if (Serial2.available()) {
+    command = Serial2.readStringUntil('\n');
     command.trim();
 
     if(command.equals("forward")) {
